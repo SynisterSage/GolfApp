@@ -24,6 +24,7 @@
     "react-native-reanimated": "^4.0.2",
     "react-native-safe-area-context": "^5.6.1",
     "react-native-screens": "^4.15.2",
+    "react-native-vector-icons": "^10.3.0",
     "react-native-worklets": "^0.4.1",
     "victory-native": "^41.19.3",
     "zustand": "^5.0.8"
@@ -39,6 +40,7 @@
     "@react-native/eslint-config": "0.81.0",
     "@react-native/metro-config": "0.81.0",
     "@react-native/typescript-config": "0.81.0",
+    "@types/expo__vector-icons": "^9.0.1",
     "@types/jest": "^29.5.13",
     "@types/react": "^19.1.0",
     "@types/react-test-renderer": "^19.1.0",
