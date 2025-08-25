@@ -32,6 +32,20 @@ npm run android
 yarn android
 ```
 
+**Windows helper script (optional):** This repo includes a convenience script that can automate emulator boot, ADB reverse (8081), starting Metro with cache reset, building, installing, launching, and opening logcat. Run it from the project root:
+
+```bat
+.\run-golfapp.cmd
+```
+
+If it’s your first time using the script, open it and verify the variables at the top match your machine:
+
+```bat
+set SDK=C:\Users\<YOU>\AppData\Local\Android\Sdk
+set AVD=Medium_Phone_API_36.0
+set ROOT=D:\golfapp\GolfApp
+```
+
 ### iOS
 
 For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
@@ -66,7 +80,7 @@ This is one way to run your app — you can also build it directly from Android 
 
 Now that you have successfully run the app, let's make changes!
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+Open `App.tsx` (or `src/app/index.tsx` in this project) in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
 When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
 
@@ -85,6 +99,10 @@ You've successfully run and modified your React Native App. :partying_face:
 # Troubleshooting
 
 If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+
+**Common Android fixes:**
+- If Metro can’t connect: `adb reverse tcp:8081 tcp:8081`
+- If ADB is stuck: `adb kill-server && adb start-server`
 
 # Learn More
 
