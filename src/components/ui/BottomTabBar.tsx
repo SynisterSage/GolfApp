@@ -10,7 +10,6 @@ const ICONS: Record<string, string> = {
   Play: "⛳",
   Practice: "🎯",
   Stats: "📈",
-  Social: "👥",
 };
 
 export default function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -54,8 +53,8 @@ export default function BottomTabBar({ state, descriptors, navigation }: BottomT
 }
 
 const styles = StyleSheet.create({
-  host: { position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
+  host: { position: "absolute", left: 0, right: 0, bottom: 10, paddingHorizontal: 12 },
   bar: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 12, borderWidth: Platform.OS === "android" ? StyleSheet.hairlineWidth : 0.5 },
   item: { alignItems: "center", justifyContent: "center", flex: 1, paddingVertical: 2 },
-  underline: { position: "absolute", bottom: 4, height: 3, width: 24, borderRadius: 999 },
+  underline: { position: "absolute", bottom: 0, top: 45, height: 3, width: 24, borderRadius: 999 },
 });
