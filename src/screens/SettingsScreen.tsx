@@ -1,137 +1,384 @@
-﻿import React, { useState } from "react";
-import { ScrollView, View, Text, StyleSheet, Switch, Pressable, Alert } from "react-native";
+﻿// src/screens/SettingsScreen.tsx
+import React, { useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useColorScheme } from "react-native";
-import AppHeader from "../components/ui/AppHeader";
 import Screen from "../components/ui/Screen";
-import { makeTheme } from "../theme";
+import { useTheme } from "../theme";
+
+/* simple chevron for tappable rows */
+const ChevronRight = ({ size = 18, color = "#9CA3AF" }) => (
+  <Text style={{ fontSize: size, color, fontWeight: "900" }}>{">"}</Text>
+);
+
+type Opt = "system" | "light" | "dark";
 
 export default function SettingsScreen() {
+  const { theme, pref, setPref } = useTheme();
   const nav = useNavigation();
-  const scheme = useColorScheme();
-  const t = makeTheme(scheme);
 
   // mock state (wire to store later)
   const [notifRounds, setNotifRounds] = useState(true);
   const [notifPractice, setNotifPractice] = useState(false);
   const [haptics, setHaptics] = useState(true);
 
-  function Section({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-      <View style={[styles.card, { backgroundColor: t.color.card, borderColor: t.color.line }]}>
-        <Text style={[styles.cardTitle, { color: t.color.text }]}>{title}</Text>
-        <View style={{ gap: 6 }}>{children}</View>
-      </View>
-    );
-  }
-
-  function Row({
-    label,
-    detail,
-    onPress,
-    children,
-  }: {
-    label: string;
-    detail?: string;
-    onPress?: () => void;
-    children?: React.ReactNode;
-  }) {
-    return (
-      <Pressable
-        onPress={onPress}
-        disabled={!onPress}
-        style={({ pressed }) => [
-          styles.row,
-          { borderColor: t.color.line, opacity: pressed ? 0.9 : 1 },
-        ]}
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.label, { color: t.color.text }]}>{label}</Text>
-          {detail ? <Text style={[styles.detail, { color: t.color.sub }]}>{detail}</Text> : null}
-        </View>
-        {children}
-      </Pressable>
-    );
-  }
+  const onBack = () => {
+    // no delay: navigate immediately
+    // @ts-ignore
+    if (nav.canGoBack && nav.canGoBack()) nav.goBack();
+    // Fallback if this screen was opened directly
+    // @ts-ignore
+    else nav.navigate("Home");
+  };
 
   return (
-<>
-  <AppHeader
-    title="Settings"
-    showBack
-    onPressLeft={() => nav.goBack()}
-    onPressSettings={undefined}
-  />
-      <Screen>
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
-          <Section title="Account">
-            <Row label="Email" detail="you@packanack.golf" onPress={() => Alert.alert("Account", "Change email flow…")} />
-            <Row label="Manage Subscription" detail="Free plan" onPress={() => Alert.alert("Billing", "Open billing portal…")} />
-          </Section>
-
-          <Section title="Preferences">
-            <Row label="Theme" detail="System default" onPress={() => Alert.alert("Theme", "Light / Dark / System")} />
-            <Row label="Haptics">
-              <Switch value={haptics} onValueChange={setHaptics} />
-            </Row>
-          </Section>
-
-          <Section title="Notifications">
-            <Row label="Round reminders" detail="Pre-round checklist">
-              <Switch value={notifRounds} onValueChange={setNotifRounds} />
-            </Row>
-            <Row label="Practice tips" detail="1–2 per week">
-              <Switch value={notifPractice} onValueChange={setNotifPractice} />
-            </Row>
-          </Section>
-
-          <Section title="About">
-            <Row label="Version" detail="0.1.0 (alpha)" />
-            <Row label="Licenses" onPress={() => Alert.alert("Licenses", "Open OSS licenses…")} />
-          </Section>
-
+    <Screen>
+      <ScrollView
+        contentContainerStyle={[styles.scrollBody, { backgroundColor: theme.colors.bg }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ───────── Header row: inline back circle + centered avatar ───────── */}
+        <View style={styles.headerRow}>
           <Pressable
-            onPress={() => Alert.alert("Sign out", "Are you sure you want to sign out?", [
-              { text: "Cancel", style: "cancel" },
-              { text: "Sign out", style: "destructive", onPress: () => Alert.alert("Signed out") },
-            ])}
+            onPress={onBack}
+            hitSlop={10}
             style={({ pressed }) => [
-              styles.signOut,
-              { backgroundColor: pressed ? "#fef2f2" : "#fff", borderColor: t.color.line },
+              styles.backBtn,
+              {
+                backgroundColor: theme.colors.tint,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+              },
             ]}
           >
-            <Text style={{ color: "#DC2626", fontWeight: "700" }}>Sign Out</Text>
+            <Text style={{ color: "#fff", fontWeight: "900" }}>{"<"}</Text>
           </Pressable>
 
-          <View style={{ height: 16 }} />
-        </ScrollView>
-      </Screen>
-    </>
+          <View style={styles.headerCenter}>
+            <View style={[styles.avatar, { backgroundColor: theme.colors.surfaceAlt }]}>
+              <View style={[styles.avatarDot, { backgroundColor: theme.colors.tint }]} />
+            </View>
+            <Text style={[styles.profileName, { color: theme.colors.text }]}>User Profile</Text>
+            <Text style={[styles.profileHandle, { color: theme.colors.muted }]}>@username</Text>
+          </View>
+
+          {/* spacer to balance layout visually */}
+          <View style={styles.rightSpacer} />
+        </View>
+
+        {/* ───────── Account ───────── */}
+        <Section title="Account">
+          <Row
+            label="Email"
+            detail="you@gmail.com"
+            onPress={() => alert("Change email flow…")}
+          />
+          <Row
+            label="Manage Subscription"
+            detail="Free Plan"
+            onPress={() => alert("Open billing portal…")}
+            isLast
+          />
+        </Section>
+
+        {/* ───────── Preferences ───────── */}
+        <Section title="Preferences">
+          <Text
+            style={[
+              styles.helper,
+              { color: theme.colors.muted, marginHorizontal: 14, marginTop: 6 },
+            ]}
+          >
+            Theme
+          </Text>
+
+          <ThemeDots value={pref} onChange={(v) => setPref(v)} />
+
+          <Row label="Haptic Feedback" isLast>
+            <Switch
+              value={haptics}
+              onValueChange={setHaptics}
+              trackColor={{ true: theme.colors.tint + "55", false: theme.colors.border }}
+              thumbColor={haptics ? theme.colors.tint : "#fff"}
+            />
+          </Row>
+        </Section>
+
+        {/* ───────── Notifications ───────── */}
+        <Section title="Notifications">
+          <Row label="Round reminders" detail="Pre-round checklist">
+            <Switch
+              value={notifRounds}
+              onValueChange={setNotifRounds}
+              trackColor={{ true: theme.colors.tint + "55", false: theme.colors.border }}
+              thumbColor={notifRounds ? theme.colors.tint : "#fff"}
+            />
+          </Row>
+          <Row label="Practice tips" detail="1–2 per week" isLast>
+            <Switch
+              value={notifPractice}
+              onValueChange={setNotifPractice}
+              trackColor={{ true: theme.colors.tint + "55", false: theme.colors.border }}
+              thumbColor={notifPractice ? theme.colors.tint : "#fff"}
+            />
+          </Row>
+        </Section>
+
+        {/* ───────── About ───────── */}
+        <Section title="About">
+          <Row label="Version" detail="0.1.0 (alpha)" />
+          <Row label="Licenses" onPress={() => alert("Open OSS licenses…")} isLast />
+        </Section>
+
+        {/* ───────── Sign out (blue) ───────── */}
+        <Pressable
+          onPress={() => alert("Signed out")}
+          style={({ pressed }) => [
+            styles.signOut,
+            {
+              backgroundColor: pressed ? theme.colors.tint + "DD" : theme.colors.tint,
+              borderColor: theme.colors.tint,
+            },
+          ]}
+        >
+          <Text style={{ color: "#fff", fontWeight: "800" }}>Sign Out</Text>
+        </Pressable>
+
+        <View style={{ height: 16 }} />
+      </ScrollView>
+    </Screen>
   );
 }
 
+/* ───────────────────────────── Components ───────────────────────────── */
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const { theme } = useTheme();
+  return (
+    <View style={styles.sectionWrap}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{title}</Text>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+          theme.mode === "dark" ? styles.cardDarkShadow : styles.cardLightShadow,
+        ]}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function Row({
+  label,
+  detail,
+  onPress,
+  children,
+  isLast,
+}: {
+  label: string;
+  detail?: string;
+  onPress?: () => void;
+  children?: React.ReactNode;
+  isLast?: boolean;
+}) {
+  const { theme } = useTheme();
+  const clickable = !!onPress;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!clickable}
+      style={({ pressed }) => [
+        styles.row,
+        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border },
+        { opacity: pressed ? 0.92 : 1 },
+      ]}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.label, { color: theme.colors.text }]}>{label}</Text>
+        {detail ? <Text style={[styles.detail, { color: theme.colors.muted }]}>{detail}</Text> : null}
+      </View>
+      {children ? children : clickable ? <ChevronRight color={theme.colors.muted} /> : null}
+    </Pressable>
+  );
+}
+
+/* Compact Theme Dots (icon-only) */
+function ThemeDots({ value, onChange }: { value: Opt; onChange: (v: Opt) => void }) {
+  const { theme } = useTheme();
+
+  const items: { key: Opt; icon: string; label: string }[] = [
+    { key: "system", icon: "🖥️", label: "System" },
+    { key: "light", icon: "☀️", label: "Light" },
+    { key: "dark", icon: "🌙", label: "Dark" },
+  ];
+
+  const baseBg = theme.mode === "dark" ? theme.colors.card : theme.colors.surface;
+  const baseBorder = theme.colors.border;
+  const activeBg = theme.colors.tint; // blue
+  const activeFg = "#ffffff";
+  const inactiveFg = theme.colors.text;
+
+  return (
+    <View style={[styles.dotsWrap, { backgroundColor: baseBg, borderColor: baseBorder }]}>
+      {items.map((it) => {
+        const selected = value === it.key;
+        return (
+          <Pressable
+            key={it.key}
+            onPress={() => onChange(it.key)}
+            accessibilityRole="button"
+            accessibilityLabel={`Theme: ${it.label}`}
+            style={({ pressed }) => [
+              styles.dotBtn,
+              {
+                backgroundColor: selected ? activeBg : baseBg,
+                borderColor: selected ? activeBg : baseBorder,
+                transform: [{ scale: pressed ? 0.96 : 1 }],
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 18, color: selected ? activeFg : inactiveFg }}>
+              {it.icon}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/* ───────────────────────────── Styles ───────────────────────────── */
+
+const AVATAR = 92;
+const BACK = 36;
+
 const styles = StyleSheet.create({
+  scrollBody: { padding: 16, gap: 14 },
+
+  /* Header: back circle inline with avatar centered */
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  backBtn: {
+    width: BACK,
+    height: BACK,
+    borderRadius: BACK / 2, // perfect circle
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 4,
+    marginBottom: 20,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
+  },
+  rightSpacer: {
+    width: BACK + 8, // balances the back button width so avatar stays centered
+  },
+
+  /* Avatar */
+  avatar: {
+    width: AVATAR,
+    height: AVATAR,
+    borderRadius: AVATAR / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  avatarDot: {
+    position: "absolute",
+    right: 8,
+    bottom: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  profileName: { fontSize: 16, fontWeight: "800" },
+  profileHandle: { fontSize: 12, marginTop: 2 },
+
+  /* Section + Card */
+  sectionWrap: { gap: 8 },
+  sectionTitle: { fontSize: 13, fontWeight: "800" },
   card: {
     borderRadius: 14,
-    padding: 14,
+    overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
   },
-  cardTitle: { fontSize: 14, fontWeight: "800", marginBottom: 8 },
+  cardLightShadow: {
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  cardDarkShadow: {
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 2,
+  },
+
+  /* Rows */
   row: {
-    minHeight: 48,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    minHeight: 56,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 8,
   },
-  label: { fontSize: 15, fontWeight: "600" },
+  label: { fontSize: 15, fontWeight: "700" },
   detail: { fontSize: 12, marginTop: 2 },
+
+  /* Theme dots */
+  dotsWrap: {
+    marginTop: 8,
+    marginHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  dotBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+
+  /* Sign out */
   signOut: {
     alignItems: "center",
     justifyContent: "center",
     height: 48,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
+    marginTop: 8,
   },
+
+  helper: { fontSize: 12, fontWeight: "700" },
 });
