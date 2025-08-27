@@ -1,123 +1,77 @@
 ﻿import React from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
-import { useRoute } from "@react-navigation/native";
-import { getRecentRounds, getRoundById } from "../features/rounds";
-import type { RoundSummary } from "../types";
+import { View, StyleSheet, FlatList, Pressable, Text } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { useTheme } from "../theme";
 
-type RouteParams = { roundId?: string } | undefined;
+import SearchBar from "../components/ui/SearchBar";
+import PillButton from "../components/ui/PillButton";
+import RoundCard from "../features/rounds/RoundCard";
+
+import { getRecentRounds } from "../features/rounds/rounds";
+import type { Round } from "../features/rounds/types";
+import { filterRounds, sortRounds, countActiveFilters, type Filters, type SortSpec } from "../features/rounds/filters";
 
 export default function StatsScreen() {
-  const route = useRoute();
-  const params = (route.params as RouteParams) || {};
+  const { theme } = useTheme();
+  const nav = useNavigation<any>();
+  const route = useRoute<any>();
 
-  const recent = getRecentRounds(10);
-  const initial =
-    (params?.roundId && recent.find(r => r.id === params.roundId)) ||
-    (params?.roundId && getRoundById(params.roundId) && recent[0]) ||
-    recent[0] ||
-    null;
+  const allRounds = React.useMemo<Round[]>(() => getRecentRounds(100) as Round[], []);
+  const [query, setQuery] = React.useState("");
+  const [filters, setFilters] = React.useState<Filters>({});
+  const [sort, setSort] = React.useState<SortSpec>({ key: "date", dir: "desc" });
+  const [showSort, setShowSort] = React.useState(false);
 
-  const [selected, setSelected] = React.useState<RoundSummary | null>(initial);
+  React.useEffect(() => {
+    if ((route.params as any)?.appliedFilters) {
+      setFilters((route.params as any).appliedFilters as Filters);
+      nav.setParams({ appliedFilters: undefined });
+    }
+  }, [route.params, nav]);
 
-  if (!recent.length) {
-    return (
-      <View style={styles.emptyWrap}>
-        <Text style={styles.h1}>Stats</Text>
-        <Text>No rounds yet. Play a round to see your stats.</Text>
-      </View>
-    );
-  }
+  const filtered = React.useMemo(() => filterRounds(allRounds, { ...filters, query }), [allRounds, filters, query]);
+  const sorted = React.useMemo(() => sortRounds(filtered, sort), [filtered, sort]);
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
-      {/* Selected Round Summary */}
-      {selected && (
-        <View style={styles.card}>
-          <Text style={styles.h1}>Round Summary</Text>
-          <Text style={styles.muted}>
-            {new Date(selected.date).toLocaleDateString()} • {selected.course} • {selected.holes} holes
-          </Text>
-
-          <View style={styles.row}>
-            <KV k="FIR" v={`${Math.round(selected.firPct * 100)}%`} />
-            <KV k="GIR" v={`${Math.round(selected.girPct * 100)}%`} />
-          </View>
-          <View style={styles.row}>
-            <KV k="Putts" v={String(selected.putts)} />
-            <KV k="Score" v={String(selected.score)} />
-          </View>
-          {"netVsHcp" in selected && typeof selected.netVsHcp === "number" ? (
-            <Text style={styles.muted}>
-              Net {selected.netVsHcp >= 0 ? "+" : ""}{selected.netVsHcp}
-            </Text>
-          ) : null}
+    <View style={[styles.container, { backgroundColor: theme.colors.bg }]}>
+      <View style={styles.controls}>
+        <SearchBar value={query} onChange={setQuery} onClear={() => setQuery("")} background="card" />
+        <View style={styles.pillsRow}>
+          <PillButton label="Sort" onPress={() => setShowSort(s => !s)} />
+          <PillButton label="Filter" onPress={() => nav.navigate("RoundFilter", { filters })} badge={countActiveFilters(filters)} />
         </View>
-      )}
 
-      {/* Recent Rounds list */}
-      <View style={styles.card}>
-        <Text style={styles.h2}>Recent Rounds</Text>
-        {recent.map(r => (
-          <Pressable key={r.id} onPress={() => setSelected(r)} style={({ pressed }) => [styles.item, pressed && { opacity: 0.85 }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.itemTitle}>{r.course}</Text>
-              <Text style={styles.muted}>{new Date(r.date).toLocaleDateString()} • {r.holes} holes</Text>
-            </View>
-            <View style={styles.itemCols}>
-              <Text style={styles.itemNum}>{Math.round(r.firPct * 100)}%</Text>
-              <Text style={styles.itemLabel}>FIR</Text>
-            </View>
-            <View style={styles.itemCols}>
-              <Text style={styles.itemNum}>{Math.round(r.girPct * 100)}%</Text>
-              <Text style={styles.itemLabel}>GIR</Text>
-            </View>
-            <View style={styles.itemCols}>
-              <Text style={styles.itemNum}>{r.putts}</Text>
-              <Text style={styles.itemLabel}>Putts</Text>
-            </View>
-            <View style={styles.itemCols}>
-              <Text style={styles.itemNum}>{r.score}</Text>
-              <Text style={styles.itemLabel}>Score</Text>
-            </View>
-          </Pressable>
-        ))}
+        {showSort && (
+          <View style={[styles.sortPanel, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            {[
+              { label: "Date: Newest → Oldest", key: "date", dir: "desc" },
+              { label: "Date: Oldest → Newest", key: "date", dir: "asc" },
+              { label: "Score: Low → High", key: "score", dir: "asc" },
+              { label: "Score: High → Low", key: "score", dir: "desc" },
+            ].map(opt => (
+              <Pressable key={opt.label} onPress={() => { setSort({ key: opt.key as any, dir: opt.dir as any }); setShowSort(false); }}>
+                <Text style={{ color: theme.colors.text, fontWeight: sort.key === opt.key && sort.dir === opt.dir ? "900" : "600", padding: 10 }}>{opt.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </View>
-    </ScrollView>
-  );
-}
 
-function KV({ k, v }: { k: string; v: string }) {
-  return (
-    <View style={{ flex: 1 }}>
-      <Text style={styles.kLabel}>{k}</Text>
-      <Text style={styles.kVal}>{v}</Text>
+      <FlatList
+        contentContainerStyle={styles.listContent}
+        data={sorted}
+        keyExtractor={(item) => item.id}
+        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        renderItem={({ item }) => <RoundCard round={item} onPress={() => nav.navigate("RoundDetail", { roundId: item.id })} />}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { padding: 16, gap: 12 },
-  emptyWrap: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
-  card: { backgroundColor: "#fff", borderRadius: 12, padding: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: "#e5e7eb" },
-
-  h1: { fontSize: 18, fontWeight: "800", marginBottom: 6 },
-  h2: { fontSize: 16, fontWeight: "800", marginBottom: 6 },
-  muted: { color: "#6b7280" },
-
-  row: { flexDirection: "row", gap: 12, marginTop: 8 },
-  kLabel: { color: "#6b7280", fontSize: 12 },
-  kVal: { fontSize: 18, fontWeight: "700" },
-
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
-    gap: 10,
-  },
-  itemTitle: { fontWeight: "700" },
-  itemCols: { width: 54, alignItems: "center" },
-  itemNum: { fontWeight: "800" },
-  itemLabel: { color: "#6b7280", fontSize: 11 },
+   container: { flex: 1 },
+  controls: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, gap: 8 },
+  pillsRow: { flexDirection: "row", gap: 8, marginTop: 5 , marginBottom: 6 },
+  sortPanel: { marginBottom: 10, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth },
+  listContent: { paddingHorizontal: 16, paddingBottom: 16, paddingTop: 0 },
 });

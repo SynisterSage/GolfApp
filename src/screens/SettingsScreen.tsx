@@ -29,12 +29,10 @@ export default function SettingsScreen() {
   const [haptics, setHaptics] = useState(true);
 
   const onBack = () => {
-    // no delay: navigate immediately
     // @ts-ignore
     if (nav.canGoBack && nav.canGoBack()) nav.goBack();
-    // Fallback if this screen was opened directly
     // @ts-ignore
-    else nav.navigate("Home");
+    else nav.navigate("Home" as never);
   };
 
   return (
@@ -67,8 +65,30 @@ export default function SettingsScreen() {
             <Text style={[styles.profileHandle, { color: theme.colors.muted }]}>@username</Text>
           </View>
 
-          {/* spacer to balance layout visually */}
           <View style={styles.rightSpacer} />
+        </View>
+
+        {/* ✅ NEW: Centered "Edit Bag" button right under the profile */}
+        <View style={{ alignItems: "center", marginTop: 6, marginBottom: 10 }}>
+          <Pressable
+            // @ts-ignore
+            onPress={() => nav.navigate("BagBuilder" as never)}
+            style={({ pressed }) => [
+              {
+                backgroundColor: pressed ? theme.colors.tint + "DD" : theme.colors.tint,
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+                borderRadius: 999, // pill
+                shadowColor: "#000",
+                shadowOpacity: theme.mode === "dark" ? 0.25 : 0.1,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 3,
+              },
+            ]}
+          >
+            <Text style={{ color: "#fff", fontWeight: "800" }}>Edit Bag</Text>
+          </Pressable>
         </View>
 
         {/* ───────── Account ───────── */}
@@ -273,7 +293,7 @@ const styles = StyleSheet.create({
   backBtn: {
     width: BACK,
     height: BACK,
-    borderRadius: BACK / 2, // perfect circle
+    borderRadius: BACK / 2,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 4,
@@ -284,7 +304,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   rightSpacer: {
-    width: BACK + 8, // balances the back button width so avatar stays centered
+    width: BACK + 8,
   },
 
   /* Avatar */
