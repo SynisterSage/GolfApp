@@ -1,5 +1,5 @@
 // src/screens/BagViewScreen.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import Svg, { Path, Circle, Line, Rect } from "react-native-svg";
 import { useTheme } from "../theme";
 import { Bag, BagClub, ClubType, loadBag } from "../features/bag/storage";
+import { useFocusEffect } from "@react-navigation/native";
 
 /* ───────────────────────────── Club Icons ───────────────────────────── */
 function DriverIcon({ color, size = 24 }: { color: string; size?: number }) {
@@ -105,10 +106,11 @@ export default function BagViewScreen({ navigation }: any) {
   const s = useMemo(() => styles(theme), [theme]);
   const [bag, setBag] = useState<Bag>({ updatedAt: Date.now(), clubs: [] });
 
-  useEffect(() => {
-    loadBag().then((b) => setBag(b));
-  }, []);
-
+ useFocusEffect(
+    React.useCallback(() => {
+      loadBag().then((b) => setBag(b));
+    }, [])
+  );
   // Group clubs by type for organized display
   const grouped = useMemo(() => {
     const map: Record<ClubType, BagClub[]> = { 

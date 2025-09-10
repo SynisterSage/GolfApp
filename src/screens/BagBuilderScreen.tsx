@@ -105,39 +105,62 @@ export default function BagBuilderScreen({ navigation }: any) {
   /* ---------------- Actions ---------------- */
 
   function addPreset() {
-    if (type === "Custom") return;
-    const preset =
-      PRESETS[type].find((p) => p.id === selectedPreset) || PRESETS[type][0];
-    if (!preset) return;
+  if (type === "Custom") return;
+  const preset =
+    PRESETS[type].find((p) => p.id === selectedPreset) || PRESETS[type][0];
+  if (!preset) return;
 
-    const loftToUse = type === "Wedge" ? (wedgeLoft.trim() || preset.loft) : preset.loft;
+  const loftToUse = type === "Wedge" ? (wedgeLoft.trim() || preset.loft) : preset.loft;
 
-    const newClub: BagClub = {
-      id: `${preset.id}-${unique()}`,
-      type,
-      label: preset.label,
-      loft: loftToUse,
-      yardage: presetYardage.trim() || undefined,
-    };
-    setBag((b) => ({ ...b, clubs: [...b.clubs, newClub] }));
-    setPresetYardage("");
+  // Prevent duplicates (same type + label)
+  const duplicate = bag.clubs.some(
+    (c) => c.type === type && c.label === preset.label
+  );
+  if (duplicate) {
+    Alert.alert("Duplicate Club", `${preset.label} is already in your bag.`);
+    return;
   }
 
-  function addCustom() {
-    if (!customLabel.trim()) return;
-    const bucket: ClubType = "Iron";
-    const newClub: BagClub = {
-      id: `${slug(customLabel)}-${unique()}`,
-      type: bucket,
-      label: customLabel.trim(),
-      loft: customLoft.trim() || undefined,
-      yardage: customYardage.trim() || undefined,
-    };
-    setBag((b) => ({ ...b, clubs: [...b.clubs, newClub] }));
-    setCustomLabel("");
-    setCustomLoft("");
-    setCustomYardage("");
+  const newClub: BagClub = {
+    id: `${preset.id}-${unique()}`,
+    type,
+    label: preset.label,
+    loft: loftToUse,
+    yardage: presetYardage.trim() || undefined,
+  };
+  setBag((b) => ({ ...b, clubs: [...b.clubs, newClub] }));
+  setPresetYardage("");
+
+  // Close dropdown after selection
+  setDropdownOpen(false);
+}
+
+
+ function addCustom() {
+  if (!customLabel.trim()) return;
+
+  // Prevent duplicates for custom club
+  const duplicate = bag.clubs.some(
+    (c) => c.label.toLowerCase() === customLabel.trim().toLowerCase()
+  );
+  if (duplicate) {
+    Alert.alert("Duplicate Club", `${customLabel.trim()} is already in your bag.`);
+    return;
   }
+
+  const bucket: ClubType = "Iron"; // You can let user choose type if needed
+  const newClub: BagClub = {
+    id: `${slug(customLabel)}-${unique()}`,
+    type: bucket,
+    label: customLabel.trim(),
+    loft: customLoft.trim() || undefined,
+    yardage: customYardage.trim() || undefined,
+  };
+  setBag((b) => ({ ...b, clubs: [...b.clubs, newClub] }));
+  setCustomLabel("");
+  setCustomLoft("");
+  setCustomYardage("");
+}
 
   function removeClub(id: string) {
     setBag((b) => ({ ...b, clubs: b.clubs.filter((c) => c.id !== id) }));
@@ -258,7 +281,10 @@ export default function BagBuilderScreen({ navigation }: any) {
                       return (
                         <Pressable
                           key={p.id}
-                          onPress={() => setSelectedPreset(p.id)}
+                          onPress={() => {
+                            setSelectedPreset(p.id);
+                            setDropdownOpen(false); // close dropdown on selection
+                          }}
                           style={({ pressed }) => [
                             s.optionRow,
                             active && { borderColor: theme.colors.tint, backgroundColor: theme.colors.tintSoft },
