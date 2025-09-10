@@ -5,11 +5,11 @@ export const BAG_KEY = "golfapp:bag:v1";
 
 export type ClubType = "Wood" | "Hybrid" | "Iron" | "Wedge" | "Putter";
 export type BagClub = {
-  id: string;      // e.g. "driver", "7i", "54", "putter"
+  id: string;
   type: ClubType;
-  label: string;   // "Driver", "7 Iron", "54°", "Putter"
+  label: string;
   loft?: string;
-  notes?: string;
+  yardage?: string; 
 };
 
 export type Bag = {

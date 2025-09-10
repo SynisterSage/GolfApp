@@ -58,6 +58,16 @@ function FlagPole({ color }: { color: string }) {
   );
 }
 
+function GolfBagIcon({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M8 4h8v16l-4 2-4-2V4z" stroke={color} strokeWidth={2} strokeLinejoin="round" />
+      <Path d="M6 6h12" stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Path d="M10 2v4M14 2v4" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 function SmallIconButton({
   onPress,
   bg,
@@ -177,6 +187,10 @@ export default function HomeScreen() {
     // @ts-ignore
     nav.navigate("Practice");
   };
+  const openBag = () => {
+    // @ts-ignore
+    nav.navigate("BagView");
+  };
 
   return (
     <ScrollView
@@ -219,7 +233,7 @@ export default function HomeScreen() {
       {/* Section: Your golf today */}
       <Text style={s.sectionTitle}>Your golf today</Text>
 
-      {/* Grid: Last Played + Practice */}
+      {/* Grid: Last Played, Practice, Your Bag */}
       <View style={s.grid}>
         <Pressable onPress={() => openRound(lastRound)} style={({ pressed }) => [s.card, s.half, pressed && s.pressed]}>
           <Text style={s.cardTitle}>{lastRound.course}</Text>
@@ -255,6 +269,18 @@ export default function HomeScreen() {
           </View>
         </Pressable>
       </View>
+
+      {/* NEW: Your Bag card - full width */}
+      <Pressable onPress={openBag} style={({ pressed }) => [s.card, s.bagCard, pressed && s.pressed]}>
+        <View style={s.bagContent}>
+          <GolfBagIcon color={theme.colors.tint} size={32} />
+          <View style={{ marginLeft: 12, flex: 1 }}>
+            <Text style={s.cardTitle}>Your Bag</Text>
+            <Text style={s.subtle}>View and manage your 14 clubs</Text>
+          </View>
+          <SmallIconButton onPress={openBag} bg={theme.colors.tint} />
+        </View>
+      </Pressable>
 
       {/* Section: Round snapshot */}
       <Text style={[s.sectionTitle, { marginTop: 18 }]}>Round snapshot</Text>
@@ -366,6 +392,16 @@ function getStyles(theme: ReturnType<typeof useTheme>["theme"]) {
       shadowRadius: 1,
     },
     cardLg: { padding: 16, borderRadius: 16, marginTop: 2 },
+
+    // NEW: Bag card styles
+    bagCard: {
+      marginTop: 12,
+      padding: 16,
+    },
+    bagContent: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
 
     cardTitle: { fontSize: 16, fontWeight: "800", color: theme.colors.text, marginBottom: 2 },
     dateText: { color: theme.colors.muted, marginBottom: 8, fontSize: 12 },

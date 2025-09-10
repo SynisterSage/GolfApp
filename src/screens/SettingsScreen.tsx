@@ -68,11 +68,11 @@ export default function SettingsScreen() {
           <View style={styles.rightSpacer} />
         </View>
 
-        {/* ✅ NEW: Centered "Edit Bag" button right under the profile */}
+        {/* ✅ Centered "Open Bag" button */}
         <View style={{ alignItems: "center", marginTop: 6, marginBottom: 10 }}>
           <Pressable
             // @ts-ignore
-            onPress={() => nav.navigate("BagBuilder" as never)}
+            onPress={() => nav.navigate("BagView" as never)}
             style={({ pressed }) => [
               {
                 backgroundColor: pressed ? theme.colors.tint + "DD" : theme.colors.tint,
@@ -87,9 +87,12 @@ export default function SettingsScreen() {
               },
             ]}
           >
-            <Text style={{ color: "#fff", fontWeight: "800" }}>Edit Bag</Text>
+            <Text style={{ color: "#fff", fontWeight: "800" }}>Open Bag</Text>
           </Pressable>
         </View>
+
+
+       
 
         {/* ───────── Account ───────── */}
         <Section title="Account">

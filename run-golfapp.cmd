@@ -1,8 +1,8 @@
 @echo off
 setlocal
-set SDK=C:\Users\aferg\AppData\Local\Android\Sdk
+set SDK=%USERPROFILE%\AppData\Local\Android\Sdk
 set AVD=Medium_Phone_API_36.0
-set ROOT=D:\golfapp\GolfApp
+set ROOT=C:\Visual Studio Code Projects\GolfApp
 
 echo ==== KILL OLD PROCESSES ====
 taskkill /f /im emulator.exe 2>nul
@@ -25,18 +25,18 @@ echo ==== WIRE METRO PORT 8081 ====
 "%SDK%\platform-tools\adb.exe" reverse tcp:8081 tcp:8081
 
 echo ==== START METRO SERVER ====
-start cmd /k "cd /d %ROOT% && npx react-native start --reset-cache"
+start cmd /k "cd /d ""%ROOT%"" && npx react-native start --reset-cache"
 
 echo ==== BUILD + INSTALL APP ====
-cd /d %ROOT%\android
+cd /d "%ROOT%\android"
 call gradlew installDebug
 
 echo ==== LAUNCH APP ====
 "%SDK%\platform-tools\adb.exe" shell am start -n com.golfapp/.MainActivity
 
 echo ==== OPEN LOGS ====
-start cmd /k "cd /d %ROOT% && ^ 
-  \"%SDK%\platform-tools\adb.exe\" logcat -v time *:S ReactNative:V ReactNativeJS:V AndroidRuntime:E"
+start cmd /k "cd /d ""%ROOT%"" && ^
+  ""%SDK%\platform-tools\adb.exe"" logcat -v time *:S ReactNative:V ReactNativeJS:V AndroidRuntime:E"
 
 echo ==== DONE! ====
 endlocal

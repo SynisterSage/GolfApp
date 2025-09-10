@@ -53,29 +53,30 @@ export default function BagBuilderScreen({ navigation }: any) {
   const [bag, setBag] = useState<Bag>({ updatedAt: Date.now(), clubs: [] });
 
   // Selection state
-  const [type, setType] = useState<TypeOrCustom>("Iron"); // default
+  const [type, setType] = useState<TypeOrCustom>("Iron");
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Wedge-only editable loft (prefills from preset, can override)
+  // Wedge-only editable loft
   const [wedgeLoft, setWedgeLoft] = useState<string>("");
 
-  // Custom (when pill = Custom)
+  // Custom
   const [customLabel, setCustomLabel] = useState("");
   const [customLoft, setCustomLoft] = useState("");
+  const [customYardage, setCustomYardage] = useState("");
+
+  // Yardage for preset
+  const [presetYardage, setPresetYardage] = useState("");
 
   useEffect(() => {
     loadBag().then((b) => setBag(b));
   }, []);
 
-  // When type changes:
-  // - keep dropdown open/closed as-is (your request)
-  // - for preset types, preselect first preset; for Custom, clear preset
-  // - if Wedge, sync wedgeLoft from preset; otherwise clear
   useEffect(() => {
     if (type === "Custom") {
       setSelectedPreset(null);
       setWedgeLoft("");
+      setPresetYardage("");
       return;
     }
     const first = PRESETS[type][0]?.id ?? null;
@@ -86,9 +87,9 @@ export default function BagBuilderScreen({ navigation }: any) {
     } else {
       setWedgeLoft("");
     }
+    setPresetYardage("");
   }, [type]);
 
-  // When preset changes and type is Wedge, update wedgeLoft if empty
   useEffect(() => {
     if (type !== "Wedge") return;
     const p = selectedPreset ? PRESETS.Wedge.find((x) => x.id === selectedPreset) : undefined;
@@ -104,7 +105,7 @@ export default function BagBuilderScreen({ navigation }: any) {
   /* ---------------- Actions ---------------- */
 
   function addPreset() {
-    if (type === "Custom") return; // not applicable
+    if (type === "Custom") return;
     const preset =
       PRESETS[type].find((p) => p.id === selectedPreset) || PRESETS[type][0];
     if (!preset) return;
@@ -116,23 +117,26 @@ export default function BagBuilderScreen({ navigation }: any) {
       type,
       label: preset.label,
       loft: loftToUse,
+      yardage: presetYardage.trim() || undefined,
     };
     setBag((b) => ({ ...b, clubs: [...b.clubs, newClub] }));
+    setPresetYardage("");
   }
 
   function addCustom() {
     if (!customLabel.trim()) return;
-    // Let user choose which bucket Custom goes in? Use current 'type' when Custom is selected → default to Iron if somehow not.
-    const bucket: ClubType = "Iron"; // neutral default if needed
+    const bucket: ClubType = "Iron";
     const newClub: BagClub = {
       id: `${slug(customLabel)}-${unique()}`,
       type: bucket,
       label: customLabel.trim(),
       loft: customLoft.trim() || undefined,
+      yardage: customYardage.trim() || undefined,
     };
     setBag((b) => ({ ...b, clubs: [...b.clubs, newClub] }));
     setCustomLabel("");
     setCustomLoft("");
+    setCustomYardage("");
   }
 
   function removeClub(id: string) {
@@ -156,7 +160,6 @@ export default function BagBuilderScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={s.screen}>
-      {/* Taller header to match Home */}
       <View style={s.headerRow}>
         <Text style={s.title}>Build Your Bag</Text>
         <View style={{ flex: 1 }} />
@@ -167,11 +170,9 @@ export default function BagBuilderScreen({ navigation }: any) {
         style={{ paddingHorizontal: theme.space(3) }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Add a club */}
         <View style={s.card}>
           <Text style={s.cardTitle}>Add a club</Text>
 
-          {/* Type pills — now horizontal scroll and includes "Custom" */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -189,7 +190,6 @@ export default function BagBuilderScreen({ navigation }: any) {
             ))}
           </ScrollView>
 
-          {/* If Custom is selected: show the custom editor; else show preset UI */}
           {isCustom ? (
             <>
               <View style={{ flexDirection: "row", gap: theme.space(2) }}>
@@ -203,12 +203,23 @@ export default function BagBuilderScreen({ navigation }: any) {
                     style={s.input}
                   />
                 </View>
-                <View style={{ width: 120 }}>
-                  <Text style={s.label}>Loft (opt.)</Text>
+                <View style={{ width: 100 }}>
+                  <Text style={s.label}>Loft</Text>
                   <TextInput
                     value={customLoft}
                     onChangeText={setCustomLoft}
                     placeholder="18°"
+                    placeholderTextColor={theme.colors.muted}
+                    style={s.input}
+                  />
+                </View>
+                <View style={{ width: 100 }}>
+                  <Text style={s.label}>Yardage</Text>
+                  <TextInput
+                    value={customYardage}
+                    onChangeText={setCustomYardage}
+                    placeholder="200"
+                    keyboardType="numeric"
                     placeholderTextColor={theme.colors.muted}
                     style={s.input}
                   />
@@ -264,23 +275,30 @@ export default function BagBuilderScreen({ navigation }: any) {
                 </View>
               )}
 
-              {/* WEDGE-ONLY: editable loft */}
               {type === "Wedge" && (
                 <View style={{ marginTop: theme.space(2) }}>
                   <Text style={s.label}>Loft (edit for this wedge)</Text>
                   <TextInput
                     value={wedgeLoft}
                     onChangeText={setWedgeLoft}
-                    placeholder={
-                      selectedPreset
-                        ? PRESETS.Wedge.find((p) => p.id === selectedPreset)?.loft || "54°"
-                        : "54°"
-                    }
+                    placeholder="54°"
                     placeholderTextColor={theme.colors.muted}
                     style={s.input}
                   />
                 </View>
               )}
+
+              <View style={{ marginTop: theme.space(2) }}>
+                <Text style={s.label}>Yardage</Text>
+                <TextInput
+                  value={presetYardage}
+                  onChangeText={setPresetYardage}
+                  placeholder="200"
+                  keyboardType="numeric"
+                  placeholderTextColor={theme.colors.muted}
+                  style={s.input}
+                />
+              </View>
 
               <View style={s.actionsRow}>
                 <Primary label="Add Preset" onPress={addPreset} theme={theme} />
@@ -289,7 +307,6 @@ export default function BagBuilderScreen({ navigation }: any) {
           )}
         </View>
 
-        {/* Current bag */}
         <Text style={[s.sectionHeader, { marginTop: theme.space(3) }]}>
           Current Bag ({bag.clubs.length})
         </Text>
@@ -308,12 +325,13 @@ export default function BagBuilderScreen({ navigation }: any) {
                       key={c.id}
                       style={[
                         s.row,
-                        // remove bottom border on last visible item inside this card
                         idx === list.length - 1 && { borderBottomWidth: 0 },
                       ]}
                     >
                       <Text style={s.rowText}>
-                        {c.label} {c.loft ? `• ${c.loft}` : ""}
+                        {c.label}
+                        {c.loft ? ` • ${c.loft}` : ""}
+                        {c.yardage ? ` • ${c.yardage} yds` : ""}
                       </Text>
                       <Pressable
                         onPress={() => removeClub(c.id)}
@@ -330,7 +348,6 @@ export default function BagBuilderScreen({ navigation }: any) {
         })}
       </ScrollView>
 
-      {/* Taller footer to match Home */}
       <View style={s.footer}>
         <Primary label="Save Bag" onPress={saveAndClose} theme={theme} />
         <Ghost label="Cancel" onPress={() => navigation.goBack()} theme={theme} />
@@ -341,17 +358,7 @@ export default function BagBuilderScreen({ navigation }: any) {
 
 /* ---------------- UI bits ---------------- */
 
-function Seg({
-  label,
-  active,
-  onPress,
-  theme,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-  theme: any;
-}) {
+function Seg({ label, active, onPress, theme }: { label: string; active: boolean; onPress: () => void; theme: any }) {
   return (
     <Pressable
       onPress={onPress}
@@ -374,15 +381,7 @@ function Seg({
   );
 }
 
-function Primary({
-  label,
-  onPress,
-  theme,
-}: {
-  label: string;
-  onPress: () => void;
-  theme: any;
-}) {
+function Primary({ label, onPress, theme }: { label: string; onPress: () => void; theme: any }) {
   return (
     <Pressable
       onPress={onPress}
@@ -402,15 +401,7 @@ function Primary({
   );
 }
 
-function Ghost({
-  label,
-  onPress,
-  theme,
-}: {
-  label: string;
-  onPress: () => void;
-  theme: any;
-}) {
+function Ghost({ label, onPress, theme }: { label: string; onPress: () => void; theme: any }) {
   return (
     <Pressable
       onPress={onPress}
@@ -448,8 +439,6 @@ const unique = () => Math.random().toString(36).slice(2, 7);
 const styles = (theme: any) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: theme.colors.bg },
-
-    /* Taller header (matches your Home spacing) */
     headerRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -458,9 +447,7 @@ const styles = (theme: any) =>
       paddingBottom: theme.space(2),
     },
     title: { fontSize: 24, fontWeight: "800", color: theme.colors.text },
-
     sectionHeader: { color: theme.colors.muted, fontWeight: "700", marginBottom: 8 },
-
     card: {
       backgroundColor: theme.colors.card,
       borderRadius: theme.radius.lg,
@@ -471,9 +458,7 @@ const styles = (theme: any) =>
     },
     cardTitle: { color: theme.colors.text, fontWeight: "700", fontSize: 16 },
     helper: { color: theme.colors.muted },
-
     label: { color: theme.colors.muted, fontSize: 12, fontWeight: "700" },
-
     select: {
       borderWidth: 1,
       borderColor: theme.colors.border,
@@ -499,7 +484,6 @@ const styles = (theme: any) =>
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
     },
-
     input: {
       borderWidth: 1,
       borderColor: theme.colors.border,
@@ -509,40 +493,32 @@ const styles = (theme: any) =>
       color: theme.colors.text,
       backgroundColor: theme.colors.bg,
     },
-
-    /* Rows — fixed alignment for Remove button */
     row: {
       minHeight: 48,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: theme.space(1.5),
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
+      paddingVertical: theme.space(1),
     },
-    rowText: { color: theme.colors.text },
-
+    rowText: { color: theme.colors.text, fontSize: 15, fontWeight: "600" },
     removeBtn: {
-      height: 32,
-      paddingHorizontal: theme.space(3),
-      borderRadius: theme.radius.md,
-      backgroundColor: theme.colors.danger,
-      alignItems: "center",
-      justifyContent: "center",
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: theme.radius.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
     },
-    removeText: { color: "#fff", fontWeight: "800" },
-
+    removeText: { color: theme.colors.muted, fontSize: 12 },
     actionsRow: { flexDirection: "row", gap: theme.space(2), marginTop: theme.space(2) },
-
-    /* Taller footer (matches your Home button row height) */
     footer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: theme.space(3),
+      paddingVertical: theme.space(2),
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
       backgroundColor: theme.colors.card,
-      paddingHorizontal: theme.space(3),
-      paddingVertical: theme.space(6),
-      flexDirection: "row",
-      gap: theme.space(2),
-      justifyContent: "space-between",
     },
   });

@@ -16,9 +16,8 @@ import PracticeScreen from "../screens/PracticeScreen";
 import StatsScreen from "../screens/StatsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import BagBuilderScreen from "../screens/BagBuilderScreen";
+import BagViewScreen from "../screens/BagViewScreen"; // ✅ added
 
-
-// ✅ Make sure names match your navigation calls
 import RoundDetailScreen from "../screens/RoundDetailScreen";
 import RoundFilterScreen from "../screens/RoundFilterScreen";
 
@@ -116,8 +115,12 @@ function NavWithTheme() {
 
         {/* Settings */}
         <Stack.Screen name="Settings" component={SettingsScreen} />
-  <Stack.Screen name="BagBuilder" component={BagBuilderScreen} />
-        {/* ✅ Registered with the exact names your Stats screen uses */}
+        <Stack.Screen name="BagBuilder" component={BagBuilderScreen} />
+
+        {/* ✅ BagView added */}
+        <Stack.Screen name="BagView" component={BagViewScreen} />
+
+        {/* Stats / Rounds */}
         <Stack.Screen name="RoundDetail" component={RoundDetailScreen} />
         <Stack.Screen
           name="RoundFilter"
